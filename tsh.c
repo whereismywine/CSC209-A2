@@ -165,9 +165,40 @@ int main(int argc, char **argv) {
  * when we type ctrl-c (ctrl-z) at the keyboard.  
 */
 void eval(char *cmdline) {
+    char *argv[MAXARGS];
+    char buf[MAXLINE];
+    int bg = parseline(buf, argv);
+    pid_t pid;
+    sigset_t mask;
+
+
+    if (!builtin_cmd(argv)) {
+        sigemptyset(&mask);
+        sigaddset(&mask, SIG_CHLD);
+        sigprocmask(SIG_BLOCK, &mask, NULL);
+        pid = fork();
+        if (pid == 0) {
+                setpgid(0, 0); // putting the child in a group pid
+                sigprocmask(SIG_UNBLOCK, &mask, NULL);
+        }
+        else {
+                //use the parseline function - it returns True when
+
+                if (!bg) { 
+                    // running in fg, so adding the job to fg
+                    // unblocking the signal so the process can work
+
+                       addjob(jobs, pid, FG, cmdline);
+                       sigprocmask(SIG_UNBLOCK, &mask, NULL);
+                       waitfg(pid); // waits for the fg process to terminate
+
+                } else {
+
+                       // running in bg
+                }
+        }
     return;
 }
-
 /* 
  * parseline - Parse the command line and build the argv array.
  * 
