@@ -290,7 +290,17 @@ void sigchld_handler(int sig) {
  *    to the foreground job.  
  */
 void sigint_handler(int sig) {
-    return;
+     if (sig == SIGINT) {
+             // get pid of the foreground job
+             pid_t fgpid = fgpid(jobs);
+             // fgpid() returns zero if no such job exists
+             if (pid != 0) {
+                // sending it to the foreground job
+                kill(-fgpid, sig);
+
+             }
+     }
+     return;
 }
 
 /*
