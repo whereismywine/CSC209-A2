@@ -265,6 +265,23 @@ void do_bgfg(char **argv) {
  * waitfg - Block until process pid is no longer the foreground process
  */
 void waitfg(pid_t pid) {
+    // the below function gives the group process id of the pid
+    pid_t pgid = getpgid(pid_t pid);
+    // the below function gives the group process id of the foreground
+    // process id
+    pid_t fgpgid = tcgetpgrp(STDOUT_FILENO);
+
+    while (pgid == fgpgid) {
+            sleep(1);
+
+    }
+    // the below code could work too! 
+    // while(1) {
+    //     if (pgid == fgpgid) {
+    //          sleep(1);
+    //      }else {
+    //          break;
+    //      }
     return;
 }
 
