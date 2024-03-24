@@ -352,7 +352,39 @@ void waitfg(pid_t pid) {
  *     currently running children to terminate.  
  */
 void sigchld_handler(int sig) {
-    return;
+    // we have to call waitpid to learn about the child stopping
+
+        pid_t pid;
+        int status;
+        struct job_t *job;
+
+        while ((pid = waitpid(-1, &state, WNOHANG))> 0) {       // pid of -1 means I wait for child to finish
+                job = getjobpid(jobs, pid);
+                //Analyzing a child's process exit status
+                //
+                if (WIFEXITED(status)) {
+                        printf("Child process %d terminated normally with status %d\n", pid, WIFEXITED(status));
+                        sigprocmask(SIG_BLOCK, &mask_all, &prev_all); //Blocking the signal
+                        deletejob(jobs, pid); // deleting the job
+                        sigprocmask(SIG_BLOCK, &prev_all, NULL); //Unblocking the signal
+                }
+
+                else if (WIFSIGNALED(status)) {
+                        printf("Child process %d terminated with signal number %d\n", pid, WTERMSIG(status));
+                        sigprocmask(SIG_BLOCK, &mask_all, &prev_all); //Blocking the signal
+                        job -> state = ST;
+                        sigprocmask(SIG_BLOCK, &prev_all, NULL); //Unblocking the signal
+                }
+
+
+                else if (WIFSTOPPED(status)) {
+                        printf("Child process %d stopped by signal number %d\n", pid WSTOPSIG(status));
+                        sigprocmask(SIG_BLOCK, &mask_all, &prev_all); //Blocking the signal
+                        deletejob(jobs, pid);
+                        sigprocmask(SIG_BLOCK, &prev_all, NULL); //Unblocking the signal
+                }
+        }
+        return;
 }
 
 /* 
@@ -380,7 +412,13 @@ void sigint_handler(int sig) {
  *     foreground job by sending it a SIGTSTP.  
  */
 void sigtstp_handler(int sig) {
-    return;
+     if (sig == SIGSTP) {
+        pid_t fgpid = fgpid(jobs);
+        if (pid != 0) {
+                kill(-fgpid, sig);
+        }
+     }
+     return;
 }
 
 /*
