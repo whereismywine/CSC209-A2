@@ -270,9 +270,51 @@ int builtin_cmd(char **argv) {
  * do_bgfg - Execute the builtin bg and fg commands
  */
 void do_bgfg(char **argv) {
-    return;
-}
+        pid_t pid;
+        struct job_t *job;
+        if (argv[1][0] == "%") { // if it's a jid, get the job using jid
+           int jid; // convert into int jid to use getjobjid()
+           jid = atoi(&argv[1][1]);
+                // find job by jid
 
+           job = getjobjid(jobs, jid);
+
+           // we have the job, we can get the pid
+           if (job != NULL) {
+                   pid = job -> pid;// using arrow to access the pid from the struct
+           }
+           else {
+                printf("%d, does not exist", job);
+           }
+
+
+
+        }
+        else if (atoi(argv[1] != 0)) { //if it's a pid
+                pid = atoi(argv[1]); // converting the string to int
+                job = getjobpid(jobs, pid);
+                if (job == NULL) {
+                        printf("%d, does not exist", pid);
+                }
+        }
+        else { printf("argument must be jid or pid of the process");
+        }
+
+        // sending a SIGCONT to the  process every time
+        // check if they typed bg or fg    
+
+        if (!strcmp(argv[0], "bg")) {
+                // change state to bg
+                //
+                job -> state = BG;
+        }
+
+        else if (!strcmp(argv[0], "fg")) {
+                job -> state = FG;
+                waitfg(job -> pid);
+        }
+        return;
+}
 /* 
  * waitfg - Block until process pid is no longer the foreground process
  */
